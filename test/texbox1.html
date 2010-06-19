@@ -1,0 +1,25 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <title>TeX box-model test page</title>
+    <script type="text/javascript" src="../lib/jstraits.js"></script>
+    <script type="text/javascript" src="../src/texbox.js"></script>
+    <script type="text/javascript">
+        function init() {
+            var ctx = document.getElementById('canvas').getContext('2d');
+            var box1 = new md.Box(10, 20, 10);
+            var box2 = new md.Box(40, 5, 10);
+            box1.render(ctx, 100, 100);
+            box2.render(ctx, 200, 100);
+        }
+    </script>
+</head>
+<body onload='init()'>
+    <p>
+        Test page for the TeX box-model
+    </p>
+    <canvas id='canvas' width='640' height='480'></canvas>    
+</body>
+</html>
+
