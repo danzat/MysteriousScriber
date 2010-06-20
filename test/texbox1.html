@@ -8,10 +8,15 @@
     <script type="text/javascript">
         function init() {
             var ctx = document.getElementById('canvas').getContext('2d');
+            var box0 = new md.Box(20, 10, 20);
             var box1 = new md.Box(10, 20, 10);
-            var box2 = new md.Box(40, 5, 10);
-            box1.render(ctx, 100, 100);
-            box2.render(ctx, 200, 100);
+            var box2 = new md.Box(40, 5, 15);
+            var box3 = new md.Box(13, 50, 50);
+            var box4 = new md.Box(30, 15, 5);
+            var box5 = new md.Box(15, 5, 20);
+            var hlist1 = new md.HList([box1, box2]);
+            var hlist2 = new md.HList([box0, hlist1, box3, box4, box5]);
+            hlist2.render(ctx, 100, 100);
         }
     </script>
 </head>
