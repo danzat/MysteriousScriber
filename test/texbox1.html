@@ -14,8 +14,11 @@
             var box3 = new md.Box(13, 50, 50);
             var box4 = new md.Box(30, 15, 5);
             var box5 = new md.Box(15, 5, 20);
-            var hlist1 = new md.HList([box1, box2]);
-            var hlist2 = new md.HList([box0, hlist1, box3, box4, box5]);
+            var fil = new md.Fil();
+            var hlist1 = new md.HList([fil, box1, box2, fil]);
+            hlist1.hpack(100);
+            var hlist2 = new md.HList([fil, box0, hlist1, box3, box4, box5, fil]);
+            hlist2.hpack(100);
             hlist2.render(ctx, 100, 100);
         }
     </script>
