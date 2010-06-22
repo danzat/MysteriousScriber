@@ -72,6 +72,24 @@ md.List = Class.define({
         init: function (elements) {
             this._super(0, 0, 0);
             this.children = elements;
+        },
+
+        determine_order: function (set) {
+            for (var i = set.length - 1; i >= 0; i--) {
+                if (set[i] != 0) return i;
+            }
+            return 0;
+        },
+
+        set_glue: function (d, sign, set) {
+            this.glue_order = this.determine_order(set);
+            this.glue_sign = sign;
+            if (set[this.glue_order] != 0){
+                this.glue_ratio = d / set[this.glue_order];
+            } else /* set[this.glue_order] == 0 */{
+                this.glue_sign = 0;
+                this.glue_ratio = 0;
+            }
         }
     }
 });
@@ -179,19 +197,42 @@ md.HList = Class.define({
             this.hpack();
         },
 
-        hpack: function () {
+        hpack: function (w) {
+            w = (typeof w == "undefined") ? 0 : w;
             var i;
             var x = 0, d = 0, h = 0;
             var p;
+            var glue_spec;
+            var total_stretch = [0, 0, 0, 0];
+            var total_shrink = [0, 0, 0, 0];
             for (i = 0; i < this.children.length; i++) {
                 p = this.children[i];
-                x += p.width;
-                h = Math.max(h, p.height);
-                d = Math.max(d, p.depth);
+                if (p instanceof md.Box || p instanceof md.List) {
+                    x += p.width;
+                    h = Math.max(h, p.height);
+                    d = Math.max(d, p.depth);
+                } else if (p instanceof md.Glue) {
+                    glue_spec = p.glue_spec;
+                    x += glue_spec.width;
+                    total_stretch[glue_spec.stretch_order] += glue_spec.stretch;
+                    total_shrink[glue_spec.shrink_order] += glue_spec.shrink;
+                }
             }
             this.height = h;
             this.depth = d;
-            this.width = x;
+            w += x;
+            this.width = w;
+            x = w - x;
+
+            if (x == 0) {
+                this.glue_sign = 0;
+                this.glue_order = 0;
+                this.glue_ratio = 0;
+            } else if (x > 0) {
+                this.set_glue(x, 1, total_stretch);
+            } else /* x < 0 */ {
+                this.set_glue(x, -1, total_shrink);
+            }
         },
 
         render: function (ctx, x, y) {
@@ -201,8 +242,20 @@ md.HList = Class.define({
             var px = x;
             for (i = 0; i < this.children.length; i++) {
                 p = this.children[i];
-                p.render(ctx, px, y);
-                px += p.width;
+                if (p instanceof md.Box || p instanceof md.List) {
+                    p.render(ctx, px, y);
+                    px += p.width;
+                } else if (p instanceof md.Glue) {
+                    if (this.glue_sign == 1) {
+                        if (p.glue_spec.stretch_order == this.glue_order) {
+                            px += Math.round(p.glue_spec.stretch * this.glue_ratio);
+                        }
+                    } else if (this.glue_sign == -1) {
+                        if (p.glue_spec.shrink_order == this.glue_order) {
+                            px += Math.round(p.glue_spec.shrink * this.glue_ratio);
+                        }
+                    }
+                }
             }
             ctx.strokeStyle = "blue";
             ctx.strokeRect(x, y - this.height, this.width, this.height + this.depth);
