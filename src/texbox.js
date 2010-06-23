@@ -72,6 +72,10 @@ md.List = Class.define({
         init: function (elements) {
             this._super(0, 0, 0);
             this.children = elements;
+            this.glue_ratio = 0;
+            this.glue_sign = 0;
+            this.glue_order = 0;
+            this.shift_amout = 0;
         },
 
         determine_order: function (set) {
@@ -236,35 +240,77 @@ md.HList = Class.define({
         },
 
         render: function (ctx, x, y) {
-            var i;
-            var p;
             ctx.save();
-            var px = x;
-            for (i = 0; i < this.children.length; i++) {
-                p = this.children[i];
-                if (p instanceof md.Box || p instanceof md.List) {
-                    p.render(ctx, px, y);
-                    px += p.width;
-                } else if (p instanceof md.Glue) {
-                    if (this.glue_sign == 1) {
-                        if (p.glue_spec.stretch_order == this.glue_order) {
-                            px += Math.round(p.glue_spec.stretch * this.glue_ratio);
-                        }
-                    } else if (this.glue_sign == -1) {
-                        if (p.glue_spec.shrink_order == this.glue_order) {
-                            px += Math.round(p.glue_spec.shrink * this.glue_ratio);
-                        }
-                    }
-                }
-            }
             ctx.strokeStyle = "blue";
             ctx.strokeRect(x, y - this.height, this.width, this.height + this.depth);
-            ctx.strokeStyle = "red";
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-            ctx.lineTo(x + this.width, y);
-            ctx.stroke();
             ctx.restore();
+        }
+    }
+});
+
+md.Rasterizer = Class.define({
+    type: "Rasterizer",
+    members: {
+        init: function (ctx) {
+            this.ctx = ctx;
+            this.y = 0;
+            this.x = 0;
+        },
+
+        render: function (x, y, box) {
+            this.y = y;
+            this.x = x;
+            this.render_hlist(box);
+        },
+
+        render_hlist: function (box) {
+            var cur_g = 0;
+            var cur_glue = 0;
+            var glue_order = box.glue_order;
+            var glue_sign = box.glue_sign;
+            var baseline = this.y;
+            var left_edge = this.x;
+            box.render(this.ctx, this.x, this.y);
+
+            var p;
+            for (var i = 0; i < box.children.length; i++) {
+                p = box.children[i];
+                if (p instanceof md.List) {
+                    var edge = this.x;
+                    this.y = baseline + p.shift_amout;
+                    if (p instanceof md.HList) {
+                        this.render_hlist(p);
+                    } else /* p instanceof md.VList*/ {
+                        this.render_vlist(p);
+                    }
+                    this.x = edge + p.width;
+                    this.y = baseline;
+                } else if (p instanceof md.Box) {
+                    p.render(this.ctx, this.x, this.y);
+                    this.x += p.width;
+                } else if (p instanceof md.Glue) {
+                    var spec = p.glue_spec;
+                    var rule_width = spec.width - cur_g;
+                    if (glue_sign != 0) {
+                        if (glue_sign == 1) {
+                            if (spec.stretch_order == glue_order) {
+                                cur_glue += spec.stretch;
+                                cur_g = Math.round(box.glue_ratio * cur_glue);
+                            }
+                        } else /* glue_sign == -1 */ {
+                            if (spec.shrink_order == glue_order) {
+                                cur_glue += spec.shrink;
+                                cur_g = Math.round(box.glue_ratio * cur_glue);
+                            }
+                        }
+                    }
+                    rule_width += cur_g;
+                    this.x += rule_width;
+                }
+            }
+        },
+
+        render_vlist: function (box) {
         }
     }
 });

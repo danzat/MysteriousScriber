@@ -15,11 +15,13 @@
             var box4 = new md.Box(30, 15, 5);
             var box5 = new md.Box(15, 5, 20);
             var fil = new md.Fil();
-            var hlist1 = new md.HList([fil, box1, box2, fil]);
+            var fill = new md.Fill();
+            var hlist1 = new md.HList([fill, box1, box2, fill]);
             hlist1.hpack(100);
-            var hlist2 = new md.HList([fil, box0, hlist1, box3, box4, box5, fil]);
+            var hlist2 = new md.HList([fil, box0, hlist1, box3, fil, box4, box5, fil]);
             hlist2.hpack(100);
-            hlist2.render(ctx, 100, 100);
+            var rast = new md.Rasterizer(ctx);
+            rast.render(100, 100, hlist2);
         }
     </script>
 </head>
