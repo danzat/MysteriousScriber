@@ -159,6 +159,9 @@ md.SsGlue = Class.define({
     }
 });
 
+md.ADDITIONAL = 0;
+md.EXACT = 1;
+
 md.List = Class.define({
     type: "List",
     superclass: md.Box,
@@ -208,8 +211,9 @@ md.HList = Class.define({
             this.hpack();
         },
 
-        hpack: function (w) {
+        hpack: function (w, method) {
             w = (typeof w == "undefined") ? 0 : w;
+            method = (typeof method == "undefined") ? md.ADDITIONAL : method;
             var i;
             var x = 0, d = 0, h = 0;
             var p;
@@ -231,7 +235,9 @@ md.HList = Class.define({
             }
             this.height = h;
             this.depth = d;
-            w += x;
+            if (method == md.ADDITIONAL) {
+                w += x;
+            }
             this.width = w;
             x = w - x;
 
@@ -258,9 +264,10 @@ md.VList = Class.define({
             this.vpack();
         },
 
-        vpack: function (h, l) {
+        vpack: function (h, l, method) {
             h = (typeof h == "undefined") ? 0 : h;
             l = (typeof l == "undefined") ? Infinity : l;
+            method = (typeof method == "undefined") ? md.ADDITIONAL : method;
             var i;
             var y = 0, d = 0, w = 0;
             var p;
@@ -292,7 +299,9 @@ md.VList = Class.define({
             } else {
                 this.depth = d;
             }
-            h += y;
+            if (method == md.ADDITIONAL) {
+                h += y;
+            }
             this.height = h;
             y = h - y;
 

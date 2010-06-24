@@ -17,14 +17,13 @@
             var fil = new md.Fil();
             var fill = new md.Fill();
             var hlist1 = new md.HList([fill, box1, box2, fill]);
-            hlist1.hpack(100);
             var hlist2 = new md.HList([fil, box0, box3, fil, box4, box5, fil]);
-            hlist2.hpack(100);
             var vlist = new md.VList([hlist1, fil, hlist2, fil, hlist1]);
-            vlist.vpack(50);
+            var width = Math.max(hlist1.width, hlist2.width);
+            hlist1.hpack(width, md.EXACT);
             var rast = new md.Rasterizer(ctx);
-            var out = new md.HList([box1, fil, vlist, fil, box2]);
-            out.hpack(100);
+
+            var out = new md.HList([vlist]);
             rast.render(100, 200, out);
         }
     </script>
