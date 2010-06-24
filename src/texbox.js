@@ -65,39 +65,6 @@ md.Box = Class.define({
     }
 });
 
-md.List = Class.define({
-    type: "List",
-    superclass: md.Box,
-    members: {
-        init: function (elements) {
-            this._super(0, 0, 0);
-            this.children = elements;
-            this.glue_ratio = 0;
-            this.glue_sign = 0;
-            this.glue_order = 0;
-            this.shift_amount = 0;
-        },
-
-        determine_order: function (set) {
-            for (var i = set.length - 1; i >= 0; i--) {
-                if (set[i] != 0) return i;
-            }
-            return 0;
-        },
-
-        set_glue: function (d, sign, set) {
-            this.glue_order = this.determine_order(set);
-            this.glue_sign = sign;
-            if (set[this.glue_order] != 0){
-                this.glue_ratio = d / set[this.glue_order];
-            } else /* set[this.glue_order] == 0 */{
-                this.glue_sign = 0;
-                this.glue_ratio = 0;
-            }
-        }
-    }
-});
-
 md.Glue = Class.define({
     type: "Glue",
     superclass: md.Node,
@@ -192,6 +159,46 @@ md.SsGlue = Class.define({
     }
 });
 
+md.List = Class.define({
+    type: "List",
+    superclass: md.Box,
+    members: {
+        init: function (elements) {
+            this._super(0, 0, 0);
+            this.children = elements;
+            this.glue_ratio = 0;
+            this.glue_sign = 0;
+            this.glue_order = 0;
+            this.shift_amount = 0;
+        },
+
+        determine_order: function (set) {
+            for (var i = set.length - 1; i >= 0; i--) {
+                if (set[i] != 0) return i;
+            }
+            return 0;
+        },
+
+        set_glue: function (d, sign, set) {
+            this.glue_order = this.determine_order(set);
+            this.glue_sign = sign;
+            if (set[this.glue_order] != 0){
+                this.glue_ratio = d / set[this.glue_order];
+            } else /* set[this.glue_order] == 0 */{
+                this.glue_sign = 0;
+                this.glue_ratio = 0;
+            }
+        },
+
+        render: function (ctx, x, y) {
+            ctx.save();
+            ctx.strokeStyle = "blue";
+            ctx.strokeRect(x, y - this.height, this.width, this.height + this.depth);
+            ctx.restore();
+        }
+    }
+});
+
 md.HList = Class.define({
     type: "HList",
     superclass: md.List,
@@ -239,12 +246,6 @@ md.HList = Class.define({
             }
         },
 
-        render: function (ctx, x, y) {
-            ctx.save();
-            ctx.strokeStyle = "blue";
-            ctx.strokeRect(x, y - this.height, this.width, this.height + this.depth);
-            ctx.restore();
-        }
     }
 });
 
@@ -304,13 +305,6 @@ md.VList = Class.define({
             } else /* x < 0 */ {
                 this.set_glue(y, -1, total_shrink);
             }
-        },
-
-        render: function (ctx, x, y) {
-            ctx.save();
-            ctx.strokeStyle = "blue";
-            ctx.strokeRect(x, y - this.height, this.width, this.height + this.depth);
-            ctx.restore();
         }
     }
 });
