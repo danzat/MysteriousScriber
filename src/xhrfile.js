@@ -1,5 +1,8 @@
 if (typeof md == "undefined") var md = {};
 
+md.SEEK_CUR = 0;
+md.SEEK_SET = 1;
+
 md.XHRFile = Class.define({
     members: {
         init: function (url) {
@@ -19,7 +22,7 @@ md.XHRFile = Class.define({
         read: function (n) {
             if (typeof n == "undefined" || n < 1) n = 1;
             if ((this.cursor + n) > this.data.length) {
-                throw "Reached EOF";
+                throw "Error: Reached EOF";
             }
             var o = [];
             var cur = this.cursor;
@@ -29,6 +32,25 @@ md.XHRFile = Class.define({
             }
             this.cursor = cur;
             return o;
+        },
+
+        seek: function (loc, mode) {
+            loc = (typeof loc == "undefined") ? 0 : loc;
+            mode = (typeof mode == "undefined") ? md.SEEK_CUR : mode;
+            if (mode == md.SEEK_CUR) {
+                this.cursor += loc;
+            } else if (mode == md.SEEK_SET) {
+                this.cursor = loc;
+            } else {
+                throw "Error: Undefined seek mode: " + mode;
+            }
+        },
+
+        String: function (n) {
+            var data = this.read(n);
+            var s = "";
+            for (var i = 0; i < n; i++) s += String.fromCharCode(data[i]);
+            return s;
         },
         
         Byte: function () {
