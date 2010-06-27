@@ -9,15 +9,10 @@ md.XHRFile = Class.define({
             this.cursor = 0;
             if (this.source != "") {
                 var xhr = new XMLHttpRequest();
-                var self = this;
-                xhr.onreadystatechange = function() {
-                    if (xhr.readyState == 4) {
-                        self.data = xhr.responseText;
-                    }
-                };
-                xhr.open("GET", this.source);
+                xhr.open("GET", this.source, false);
                 xhr.overrideMimeType('text/plain; charset=x-user-defined');
                 xhr.send(null);
+                this.data = xhr.responseText;
             }
         },
 
@@ -57,7 +52,6 @@ md.XHRFile = Class.define({
             } else {
                 return -(((d[0] & 0xef) << 8) + d[1]);
             }
-
         },
 
         SBInt32: function () {
