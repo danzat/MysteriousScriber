@@ -5,23 +5,14 @@
     <title>Test page for loading binary data via XHR</title>
     <script type="text/javascript" src="../lib/jstraits.js"></script>
     <script type="text/javascript" src="../src/xhrfile.js"></script>
+    <script type="text/javascript" src="../src/truetype.js"></script>
     <script type="text/javascript">
         function main() {
-            var f = new md.XHRFile("http://localhost:8000/cmmi10.ttf");
-            console.debug(f.data.length);
-            var version = f.read(4);
-            var numTables = f.UBInt16();
-            var searchRange = f.UBInt16();
-            var entrySelector = f.UBInt16();
-            var rangeShift = f.UBInt16();
-            console.debug("version", version, "numTable", numTables, "searchRange", searchRange, "entrySelector", entrySelector, "rangeShift", rangeShift);
-            for (var i = 0; i < numTables; i++) {
-                var tag = f.String(4);
-                var checksum = f.UBInt32();
-                var offset = f.UBInt32();
-                var length = f.UBInt32();
-                console.debug(tag, ": checksum = ", checksum, "; offset = ", offset, "; length = ", length);
-            }
+            var f = new md.TTF("http://localhost:8000/cmmi10.ttf");
+            f.read_head();
+            f.read_maxp();
+            f.read_loca();
+            console.debug(f);
         }
     </script>
 </head>
