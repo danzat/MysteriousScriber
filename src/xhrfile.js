@@ -64,25 +64,28 @@ md.XHRFile = Class.define({
 
         UBInt32: function () {
             var d = this.read(4);
-            return (d[0] << 32)  + (d[1] << 16) + (d[2] << 8) + d[3];
-        },
-        
-        SBInt16: function () {
-            var d = this.read(2);
-            if (d[0] & 0xef == 0xef) {
-                return ((d[0] & 0xef) << 8) + d[1];
-            } else {
-                return -(((d[0] & 0xef) << 8) + d[1]);
-            }
+            return (d[0] << 24)  + (d[1] << 16) + (d[2] << 8) + d[3];
         },
 
         SBInt32: function () {
             var d = this.read(4);
-            if (d[0] & 0xef == 0xef) {
-                return ((d[0] & 0xef) << 32)  + (d[1] << 16) + (d[2] << 8) + d[3];
+            return (d[0] << 24)  + (d[1] << 16) + (d[2] << 8) + d[3];
+        },
+        
+        SBInt16: function () {
+            var d = this.UBInt16();
+            if ((d & 0x8000) == 0x8000) {
+                return d | 0xffff0000;
             } else {
-                return -(((d[0] & 0xef) << 32)  + (d[1] << 16) + (d[2] << 8) + d[3]);
+                return d;
             }
+        },
+
+        Fixed32: function () {
+            /* actually returns a float, however, since JS floats are 64 bit, they might have enough percision in them */
+            var r = this.SBInt16();
+            var l = this.UBInt16();
+            return r + l / 65536.0;
         }
     }
 });
