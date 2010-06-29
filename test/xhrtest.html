@@ -8,15 +8,29 @@
     <script type="text/javascript" src="../src/truetype.js"></script>
     <script type="text/javascript">
         function main() {
+            var ctx = document.getElementById('canvas').getContext('2d');
             var f = new md.TTF("http://localhost:8000/cmmi10.ttf");
-            f.read_head();
-            f.read_maxp();
-            f.read_loca();
+            var w = 100, h = 700;
+            var g;
+            for (var i = 0; i < f['loca'].locations.length - 1; i++) {
+                g = f['glyf'].glyphs[i];
+                ctx.save();
+                ctx.translate(w*0.1, h*0.1);
+                ctx.scale(0.1, -0.1);
+                f['glyf'].glyphs[i].render(ctx, 0, 0);
+                ctx.restore();
+                w += g.width();
+                if (w > 8000) {
+                    w = 0;
+                    h += 1000;
+                }
+            }
             console.debug(f);
         }
     </script>
 </head>
 <body onload='main()'>
+    <canvas id='canvas' width='1000' height='1000'></canvas>
 </body>
 </html>
 

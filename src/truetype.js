@@ -18,26 +18,24 @@ md.TTF = Class.define({
                 var length = f.UBInt32();
                 this.headers[tag] = {checksum: checksum, offset: offset, length: length, loaded: false};
             }
-            this['head'] = new md.tbl_head(this, this.file, this.headers['head']);
-            this['maxp'] = new md.tbl_maxp(this, this.file, this.headers['maxp']);
-            this['loca'] = new md.tbl_loca(this, this.file, this.headers['loca']);
-            this['glyf'] = new md.tbl_glyf(this, this.file, this.headers['glyf']);
+            this['head'] = new md.tbl_head(this, f.copy(this.headers['head'].offset, this.headers['head'].length));
+            this['maxp'] = new md.tbl_maxp(this, f.copy(this.headers['maxp'].offset, this.headers['maxp'].length));
+            this['loca'] = new md.tbl_loca(this, f.copy(this.headers['loca'].offset, this.headers['loca'].length));
+            this['glyf'] = new md.tbl_glyf(this, f.copy(this.headers['glyf'].offset, this.headers['glyf'].length));
         }
     }
 });
 
 md.tbl_head = Class.define({
     members: {
-        init: function (font, file, header) {
+        init: function (font, stream) {
             this.font = font;
-            this.file = file;
-            this.header = header;
+            this.file = stream;
             this.load();
         },
 
         load: function () {
             var f = this.file;
-            f.seek(this.header.offset, md.SEEK_SET);
             this.version = f.Fixed32();
             this.revision = f.Fixed32();
             this.checksum = f.UBInt32();
@@ -61,16 +59,14 @@ md.tbl_head = Class.define({
 
 md.tbl_maxp = Class.define({
     members: {
-        init: function (font, file, header) {
+        init: function (font, stream) {
             this.font = font;
-            this.file = file;
-            this.header = header;
+            this.file = stream;
             this.load();
         },
 
         load: function () {
             var f = this.file;
-            f.seek(this.header.offset, md.SEEK_SET);
             this.tableVersion = f.SBInt32();
             this.numGlyphs = f.UBInt16();
             if (this.tableVersion != 0x00005000) {
@@ -94,25 +90,23 @@ md.tbl_maxp = Class.define({
 
 md.tbl_loca = Class.define({
     members: {
-        init: function (font, file, header) {
+        init: function (font, stream) {
             this.font = font;
-            this.file = file;
-            this.header = header;
+            this.file = stream;
             this.load();
         },
 
         load: function () {
             var longFormat = this.font['head'].indexToLocFormat;
             var f = this.file;
-            f.seek(this.header.offset, md.SEEK_SET);
             var locations = [];
             if (longFormat == 1) {
-                for (var i = 0; i < this.header.length / 4; i++) {
+                for (var i = 0; i < f.length() / 4; i++) {
                     locations.push(f.SBInt32());
                 }
             } else {
-                for (var i = 0; i < this.header.length / 2; i++) {
-                    locations.push(f.UBInt16());
+                for (var i = 0; i < f.length() / 2; i++) {
+                    locations.push(2 * f.UBInt16());
                 }
             }
             if (locations.length < (this.font['maxp'].numGlyphs + 1)) throw "Error: Corrupt 'loca' table or wrong 'numGlyphs' in table 'maxp'";
@@ -123,42 +117,199 @@ md.tbl_loca = Class.define({
 
 md.tbl_glyf = Class.define({
     members: {
-        init: function (font, file, header) {
+        init: function (font, stream) {
             this.font = font;
-            this.file = file;
-            this.header = header;
+            this.file = stream;
             this.load();
         },
 
         load: function () {
             var loca = this.font['loca'].locations;
             this.glyphs = {};
-            var tbl_start = this.font.headers['glyf'].offset;
-            for (var i = 0; i < loca.length; i++) {
-                console.debug(i, loca[i] + tbl_start);
-                this.glyphs[i] = new md.Glyph(this.file, loca[i] + tbl_start);
+            for (var i = 0; i < loca.length - 1; i++) {
+                this.glyphs[i] = new md.Glyph(this.file.copy(loca[i], loca[i+1] - loca[i]));
             }
         }
     }
 });
 
+md.flagOnCurve = 0x01;
+md.flagXShort = 0x02;
+md.flagYShort = 0x04;
+md.flagRepeat = 0x08;
+md.flagXSame = 0x10;
+md.flagYSame = 0x20;
+
 md.Glyph = Class.define({
     members: {
-        init: function (file, offset) {
-            this.file = file;
-            this.offset = offset;
-            this.load();
+        init: function (stream) {
+            this.file = stream;
+            if (this.file.length() != 0) {
+                this.load();
+            }
         },
 
         load: function () {
             var f = this.file;
-            f.seek(this.offset, md.SEEK_SET);
-            this.header = {};
-            this.header.numberOfContours = f.SBInt16();
-            this.header.xMin = f.SBInt16();
-            this.header.yMin = f.SBInt16();
-            this.header.xMax = f.SBInt16();
-            this.header.yMax = f.SBInt16();
+            this.numberOfContours = f.SBInt16();
+            this.xMin = f.SBInt16();
+            this.yMin = f.SBInt16();
+            this.xMax = f.SBInt16();
+            this.yMax = f.SBInt16();
+            if (this.numberOfContours == -1) {
+                this.loadComponents();
+            } else {
+                this.loadCoordinates();
+            }
+        },
+
+        loadCoordinates: function () {
+            var f = this.file;
+            var endPointsOfContours = [];
+            for (var i = 0; i < this.numberOfContours; i++) {
+                endPointsOfContours.push(f.UBInt16());
+            }
+            var instructionLength = f.UBInt16();
+            var instructions = [];
+            for (var i = 0; i < instructionLength; i++) {
+                instructions.push(f.Byte())
+            }
+            var nCoordinates = endPointsOfContours[this.numberOfContours - 1] + 1;
+            // now we need to extract the flags information to build a specification for reading the x,y coordinate list
+            var j = 0;
+            i = 0;
+            var xspecs = [];
+            var yspecs = [];
+            var flags = [];
+            var flag;
+            var repeat;
+            while (j < nCoordinates) {
+                flag = f.Byte();
+                i++;
+                repeat = 1;
+                if (flag & md.flagRepeat) {
+                    repeat = f.Byte() + 1;
+                    i++;
+                }
+                for (var k = 0; k < repeat; k++) {
+                    if (flag & md.flagXShort) {
+                        xspecs.push('B');
+                    } else if (!(flag & md.flagXSame)) {
+                        xspecs.push('h');
+                    }
+                    if (flag & md.flagYShort) {
+                        yspecs.push('B');
+                    } else if (!(flag & md.flagYSame)) {
+                        yspecs.push('h');
+                    }
+                    flags[j] = flag;
+                    j++;
+                }
+            }
+            // load the raw data
+            var xCoords = [];
+            for (i = 0; i < xspecs.length; i++) {
+                if (xspecs[i] == 'B')
+                    xCoords.push(f.Byte());
+                else /* xspecs[i] == 'h' */
+                    xCoords.push(f.SBInt16());
+            }
+            var yCoords = [];
+            for (i = 0; i < yspecs.length; i++) {
+                if (yspecs[i] == 'B')
+                    yCoords.push(f.Byte());
+                else /* xspecs[i] == 'h' */
+                    yCoords.push(f.SBInt16());
+            }
+            // now filter it with the flags information to extract a list of endpoints
+            var ix = 0, iy = 0;
+            var dx, dy;
+            var x = 0, y = 0;
+            var coords = [];
+            var contours = [];
+            var icontour = 0;
+            for (var i = 0; i < nCoordinates; i++) {
+                flag = flags[i];
+                // x coordinate
+                if (flag & md.flagXShort) {
+                    if (flag & md.flagXSame)
+                        dx = xCoords[ix];
+                    else
+                        dx = -xCoords[ix];
+                    ix++;
+                } else if (flag & md.flagXSame) {
+                    dx = 0;
+                } else {
+                    dx = xCoords[ix];
+                    ix++;
+                }
+                // y coordinate
+                if (flag & md.flagYShort) {
+                    if (flag & md.flagYSame)
+                        dy = yCoords[iy];
+                    else
+                        dy = -yCoords[iy];
+                    iy++;
+                } else if (flag & md.flagYSame) {
+                    dy = 0;
+                } else {
+                    dy = yCoords[iy];
+                    iy++;
+                }
+                x += dx;
+                y += dy;
+                coords.push({x: x, y: y, q: (flag & md.flagOnCurve) == md.flagOnCurve});
+                if (i == endPointsOfContours[icontour]) {
+                    coords.push(coords[0]);
+                    contours.push(coords);
+                    icontour++;
+                    coords = [];
+                }
+            }
+            this.contours = contours;
+        },
+
+        render: function (ctx, x, y) {
+            if (this.file.length() == 0) return;
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.beginPath();
+            for (var k = 0; k < this.contours.length; k++) {
+                var v = this.contours[k];
+                ctx.moveTo(v[0].x, v[0].y);
+                var i = 1;
+                while (i < v.length) {
+                    if (v[i].q) {
+                        ctx.lineTo(v[i].x, v[i].y);
+                    } else {
+                        ctx.quadraticCurveTo(v[i].x, v[i].y, v[i+1].x, v[i+1].y);
+                        i++;
+                    }
+                    i++;
+                }
+            }
+            ctx.fill();
+            // draw a bounding box
+            ctx.lineWidth = 10;
+            ctx.strokeStyle = "blue";
+            ctx.strokeRect(this.xMin, this.yMin, this.xMax - this.xMin, this.yMax - this.yMin);
+            // draw the baseline
+            ctx.strokeStyle = "red";
+            ctx.beginPath();
+            ctx.moveTo(this.xMin, 0);
+            ctx.lineTo(this.xMax, 0);
+            ctx.stroke();
+            ctx.restore();
+        },
+
+        width: function () {
+            if (this.file.length() == 0) return 0;
+            return this.xMax;
+        },
+
+        height: function () {
+            if (this.file.length() == 0) return 0;
+            return this.yMax;
         }
     }
 });
