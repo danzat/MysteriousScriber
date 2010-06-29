@@ -3,20 +3,20 @@ if (typeof md == "undefined") var md = {};
 md.SEEK_CUR = 0;
 md.SEEK_SET = 1;
 
-md.XHRFile = Class.define({
+md.Stream = Class.define({
+    type: "Stream",
     members: {
-        init: function (url) {
-            this.source = url;
-            this.loaded = false;
-            this.data = "";
+        init: function (data) {
+            this.data = (typeof data == "undefine") ? "" : data;
             this.cursor = 0;
-            if (this.source != "") {
-                var xhr = new XMLHttpRequest();
-                xhr.open("GET", this.source, false);
-                xhr.overrideMimeType('text/plain; charset=x-user-defined');
-                xhr.send(null);
-                this.data = xhr.responseText;
-            }
+        },
+
+        length: function () {
+            return this.data.length;
+        },
+
+        copy: function (from, length) {
+            return new md.Stream(this.data.substr(from, length));
         },
 
         read: function (n) {
@@ -54,7 +54,7 @@ md.XHRFile = Class.define({
         },
         
         Byte: function () {
-            return this.read(1);
+            return this.read(1)[0];
         },
 
         UBInt16: function () {
@@ -86,6 +86,25 @@ md.XHRFile = Class.define({
             var r = this.SBInt16();
             var l = this.UBInt16();
             return r + l / 65536.0;
+        }
+    }
+});
+
+md.XHRFile = Class.define({
+    type: "XHRFile",
+    superclass: md.Stream,
+    members: {
+        init: function (url) {
+            this.source = url;
+            if (this.source != "") {
+                var xhr = new XMLHttpRequest();
+                xhr.open("GET", this.source, false);
+                xhr.overrideMimeType('text/plain; charset=x-user-defined');
+                xhr.send(null);
+                this._super(xhr.responseText);
+            } else {
+                this._super();
+            }
         }
     }
 });
