@@ -127,7 +127,7 @@ md.tbl_glyf = Class.define({
             var loca = this.font['loca'].locations;
             this.glyphs = {};
             for (var i = 0; i < loca.length - 1; i++) {
-                this.glyphs[i] = new md.Glyph(this.file.copy(loca[i], loca[i+1] - loca[i]));
+                this.glyphs[i] = new md.Glyph(this.file.copy(loca[i], loca[i+1] - loca[i]), this.font['head'].unitsPerEm);
             }
         }
     }
@@ -142,7 +142,8 @@ md.flagYSame = 0x20;
 
 md.Glyph = Class.define({
     members: {
-        init: function (stream) {
+        init: function (stream, unitsPerEm) {
+            this.pointsPerUnit = 12 / unitsPerEm;
             this.file = stream;
             if (this.file.length() != 0) {
                 this.load();
@@ -152,10 +153,11 @@ md.Glyph = Class.define({
         load: function () {
             var f = this.file;
             this.numberOfContours = f.SBInt16();
-            this.xMin = f.SBInt16();
-            this.yMin = f.SBInt16();
-            this.xMax = f.SBInt16();
-            this.yMax = f.SBInt16();
+            var pointsPerUnit = this.pointsPerUnit;
+            this.xMin = f.SBInt16() * pointsPerUnit;
+            this.yMin = f.SBInt16() * pointsPerUnit;
+            this.xMax = f.SBInt16() * pointsPerUnit;
+            this.yMax = f.SBInt16() * pointsPerUnit;
             if (this.numberOfContours == -1) {
                 this.loadComponents();
             } else {
@@ -164,6 +166,8 @@ md.Glyph = Class.define({
         },
 
         loadCoordinates: function () {
+            // there are 12 points in 1 em
+            var pointsPerUnit = this.pointsPerUnit;
             var f = this.file;
             var endPointsOfContours = [];
             for (var i = 0; i < this.numberOfContours; i++) {
@@ -258,7 +262,7 @@ md.Glyph = Class.define({
                 }
                 x += dx;
                 y += dy;
-                coords.push({x: x, y: y, q: (flag & md.flagOnCurve) == md.flagOnCurve});
+                coords.push({x: x * pointsPerUnit, y: y * pointsPerUnit, q: (flag & md.flagOnCurve) == md.flagOnCurve});
                 if (i == endPointsOfContours[icontour]) {
                     coords.push(coords[0]);
                     contours.push(coords);
@@ -269,20 +273,23 @@ md.Glyph = Class.define({
             this.contours = contours;
         },
 
-        render: function (ctx, x, y) {
+        render: function (ctx, dpi) {
+            // there are always 72 points in 1 inch
+            // so if I have <dpi> pixels in 1 inch
+            // 72pt = <dpi>px --> 1pt = <dpi>/72 px
+            var px2pt = dpi / 72;
             if (this.file.length() == 0) return;
             ctx.save();
-            ctx.translate(x, y);
             ctx.beginPath();
             for (var k = 0; k < this.contours.length; k++) {
                 var v = this.contours[k];
-                ctx.moveTo(v[0].x, v[0].y);
+                ctx.moveTo(v[0].x * px2pt, v[0].y * px2pt);
                 var i = 1;
                 while (i < v.length) {
                     if (v[i].q) {
-                        ctx.lineTo(v[i].x, v[i].y);
+                        ctx.lineTo(v[i].x * px2pt, v[i].y * px2pt);
                     } else {
-                        ctx.quadraticCurveTo(v[i].x, v[i].y, v[i+1].x, v[i+1].y);
+                        ctx.quadraticCurveTo(v[i].x * px2pt, v[i].y * px2pt, v[i+1].x * px2pt, v[i+1].y * px2pt);
                         i++;
                     }
                     i++;
@@ -290,26 +297,31 @@ md.Glyph = Class.define({
             }
             ctx.fill();
             // draw a bounding box
-            ctx.lineWidth = 10;
-            ctx.strokeStyle = "blue";
-            ctx.strokeRect(this.xMin, this.yMin, this.xMax - this.xMin, this.yMax - this.yMin);
+            //ctx.strokeStyle = "blue";
+            //ctx.strokeRect(this.xMin * px2pt, this.yMin * px2pt, this.xMax * px2pt - this.xMin * px2pt, this.yMax * px2pt - this.yMin * px2pt);
             // draw the baseline
-            ctx.strokeStyle = "red";
-            ctx.beginPath();
-            ctx.moveTo(this.xMin, 0);
-            ctx.lineTo(this.xMax, 0);
-            ctx.stroke();
+            //ctx.strokeStyle = "red";
+            //ctx.beginPath();
+            //ctx.moveTo(this.xMin * px2pt, 0);
+            //ctx.lineTo(this.xMax * px2pt, 0);
+            //ctx.stroke();
             ctx.restore();
         },
 
-        width: function () {
+        width: function (dpi) {
             if (this.file.length() == 0) return 0;
-            return this.xMax;
+            return this.xMax * dpi / 72;
         },
 
-        height: function () {
+        height: function (dpi) {
             if (this.file.length() == 0) return 0;
-            return this.yMax;
+            return this.yMax * dpi / 72;
+        },
+
+        depth: function (dpi) {
+            if (this.file.length() == 0) return 0;
+            if (this.yMin < 0) return -this.yMin * dpi / 72;
+            return 0;
         }
     }
 });
