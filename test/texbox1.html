@@ -14,51 +14,29 @@
             var fill = new md.Fill();
             var hlist1 = new md.HList([
                 fill,
-                new md.Char(43, f, 200),
-                new md.Char(72, f, 200),
-                new md.Char(79, f, 200),
-                new md.Char(79, f, 200),
-                new md.Char(82, f, 200),
+                new md.Char('H', f, 200),
+                new md.Char('e', f, 200),
+                new md.Char('l', f, 200),
+                new md.Char('l', f, 200),
+                new md.Char('o', f, 200),
                 fill
             ]);
             var hlist2 = new md.HList([
                 fill,
-                new md.Char(58, f, 200),
-                new md.Char(82, f, 200),
-                new md.Char(85, f, 200),
-                new md.Char(79, f, 200),
-                new md.Char(71, f, 200),
-                fill
-            ]);
-            var hlist3 = new md.HList([
-                fill,
-                new md.Char(117, f, 200),
-                new md.Char(115, f, 200),
-                new md.Char(121, f, 200),
-                new md.Char(121, f, 200),
-                new md.Char(4, f, 200),
-                fill
-            ]);
-            var hlist4 = new md.HList([
-                fill,
-                new md.Char(110, f, 200),
-                new md.Char(4, f, 200),
-                new md.Char(126, f, 200),
-                new md.Char(121, f, 200),
-                new md.Char(114, f, 200),
+                new md.Char('W', f, 200),
+                new md.Char('o', f, 200),
+                new md.Char('r', f, 200),
+                new md.Char('l', f, 200),
+                new md.Char('d', f, 200),
                 fill
             ]);
             var width = Math.max(hlist1.width, hlist2.width);
             hlist1.hpack(width, md.EXACT);
             hlist2.hpack(width, md.EXACT);
-            var width = Math.max(hlist3.width, hlist4.width);
-            hlist3.hpack(width, md.EXACT);
-            hlist4.hpack(width, md.EXACT);
             var vlist1 = new md.VList([hlist1, fill, hlist2]);
-            var vlist2 = new md.VList([hlist3, fill, hlist4]);
             var rast = new md.Rasterizer(ctx);
 
-            var out = new md.HList([vlist1, vlist2]);
+            var out = new md.HList([vlist1]);
             rast.render(100, 200, out);
         }
     </script>

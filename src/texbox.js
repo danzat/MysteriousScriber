@@ -443,9 +443,9 @@ md.Char = Class.define({
     superclass: md.Node,
     members: {
         // I still don't have the char-codes of glyphs (did not parse the 'cmap' table yet), so I'll use glyph indices for the time being
-        init: function (index, font, dpi) {
+        init: function (c, font, dpi) {
             this._super();
-            this.c = index;
+            this.c = c.charCodeAt(0);
             this.dpi = dpi;
             this.glyph = font['glyf'].glyphs[this.c];
             this.width = this.glyph.width(dpi);
