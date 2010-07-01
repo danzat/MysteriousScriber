@@ -19,18 +19,25 @@ md.Stream = Class.define({
             return new md.Stream(this.data.substr(from, length));
         },
 
-        read: function (n) {
+        /*
+         * Read <n> bytes at the current position in the stream and advance the
+         * cursor by the same amount.
+         * If the <offset> parameter is specified, read <n> number of bytes at
+         * <offset> bytes from the beginning of the stream, but do not change
+         * the current cursor position.
+         */
+        read: function (n, offset) {
             if (typeof n == "undefined" || n < 1) n = 1;
             if ((this.cursor + n) > this.data.length) {
                 throw "Error: Reached EOF";
             }
             var o = [];
-            var cur = this.cursor;
+            var cur = (typeof offset == "undefined") ? this.cursor : offset;
             var last = cur + n;
             for (; cur < last; cur++) {
                 o.push(this.data.charCodeAt(cur) % 256);
             }
-            this.cursor = cur;
+            if (typeof offset == "undefined") this.cursor = cur;
             return o;
         },
 
@@ -46,34 +53,34 @@ md.Stream = Class.define({
             }
         },
 
-        String: function (n) {
-            var data = this.read(n);
+        String: function (n, offset) {
+            var data = this.read(n, offset);
             var s = "";
             for (var i = 0; i < n; i++) s += String.fromCharCode(data[i]);
             return s;
         },
         
-        Byte: function () {
-            return this.read(1)[0];
+        Byte: function (offset) {
+            return this.read(1, offset)[0];
         },
 
-        UBInt16: function () {
-            var d = this.read(2);
+        UBInt16: function (offset) {
+            var d = this.read(2, offset);
             return (d[0] << 8) + d[1];
         },
 
-        UBInt32: function () {
-            var d = this.read(4);
+        UBInt32: function (offset) {
+            var d = this.read(4, offset);
             return (d[0] << 24)  + (d[1] << 16) + (d[2] << 8) + d[3];
         },
 
-        SBInt32: function () {
-            var d = this.read(4);
+        SBInt32: function (offset) {
+            var d = this.read(4, offset);
             return (d[0] << 24)  + (d[1] << 16) + (d[2] << 8) + d[3];
         },
         
-        SBInt16: function () {
-            var d = this.UBInt16();
+        SBInt16: function (offset) {
+            var d = this.UBInt16(offset);
             if ((d & 0x8000) == 0x8000) {
                 return d | 0xffff0000;
             } else {
@@ -81,10 +88,16 @@ md.Stream = Class.define({
             }
         },
 
-        Fixed32: function () {
+        Fixed32: function (offset) {
             /* actually returns a float, however, since JS floats are 64 bit, they might have enough percision in them */
-            var r = this.SBInt16();
-            var l = this.UBInt16();
+            var r, l;
+            if (typeof offset == "undefined") {
+                r = this.SBInt16();
+                l = this.UBInt16();
+            } else {
+                r = this.SBInt16(offset);
+                l = this.UBInt16(offset + 2);
+            }
             return r + l / 65536.0;
         }
     }
