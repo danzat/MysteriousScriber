@@ -21,6 +21,7 @@ md.TTF = Class.define({
             this['head'] = new md.tbl_head(this, f.copy(this.headers['head'].offset, this.headers['head'].length));
             this['maxp'] = new md.tbl_maxp(this, f.copy(this.headers['maxp'].offset, this.headers['maxp'].length));
             this['loca'] = new md.tbl_loca(this, f.copy(this.headers['loca'].offset, this.headers['loca'].length));
+            this['cmap'] = new md.tbl_cmap(this, f.copy(this.headers['cmap'].offset, this.headers['cmap'].length));
             this['glyf'] = new md.tbl_glyf(this, f.copy(this.headers['glyf'].offset, this.headers['glyf'].length));
         }
     }
@@ -115,6 +116,55 @@ md.tbl_loca = Class.define({
     }
 });
 
+md.tbl_cmap = Class.define({
+    members: {
+        init: function (font, stream) {
+            this.font = font;
+            this.file = stream;
+            this.maps = [];
+            this.load();
+        },
+
+        load: function () {
+            var f = this.file;
+            var tableVersion = f.UBInt16();
+            var numSubTables = f.UBInt16();
+            console.debug('numSubTables', numSubTables);
+            for (var i = 0; i < numSubTables; i++) {
+                var platformID = f.UBInt16();
+                var platEncID = f.UBInt16();
+                var offset = f.SBInt32();
+                var format = f.UBInt16(offset);
+                var length = f.UBInt16(offset + 2);
+                this.processCMAPSubTable(f.copy(offset, length), format);
+            }
+        },
+
+        processCMAPSubTable: function (f, format) {
+            if (format == 0) {
+                this.processFormat0(f);
+            } else if (format == 4) {
+                this.processFormat4(f);
+            }
+        },
+
+        processFormat0: function (f) {
+            var map = {};
+            map.type = 0;
+            var format = f.UBInt16();
+            var length = f.UBInt16();
+            var language = f.UBInt16();
+            map.language = language;
+            map.map = f.read(256);
+            this.maps.push(map);
+        },
+
+        processFormat4: function (f) {
+            console.debug(f.data);
+        }
+    }
+});
+
 md.tbl_glyf = Class.define({
     members: {
         init: function (font, stream) {
@@ -125,9 +175,14 @@ md.tbl_glyf = Class.define({
 
         load: function () {
             var loca = this.font['loca'].locations;
+            var map = this.font['cmap'].maps[0].map;
+            var glyphs = [];
             this.glyphs = {};
             for (var i = 0; i < loca.length - 1; i++) {
-                this.glyphs[i] = new md.Glyph(this.file.copy(loca[i], loca[i+1] - loca[i]), this.font['head'].unitsPerEm);
+                glyphs[i] = new md.Glyph(this.file.copy(loca[i], loca[i+1] - loca[i]), this.font['head'].unitsPerEm);
+            }
+            for (charCode in map) {
+                this.glyphs[charCode] = glyphs[map[charCode]];
             }
         }
     }

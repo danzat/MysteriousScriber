@@ -10,10 +10,10 @@
         function main() {
             var ctx = document.getElementById('canvas').getContext('2d');
             var f = new md.TTF("http://localhost:8000/res/cmmi10.ttf");
-            var w = 10, h = 100;
+            var w = 10, h = 50;
             var g;
-            var dpi = 96 * 4;
-            for (var i = 0; i < f['loca'].locations.length - 1; i++) {
+            var dpi = 96 * 3;
+            for (var i = 0; i < 256; i++) {
                 g = f['glyf'].glyphs[i];
                 ctx.save();
                 ctx.translate(w, h);
@@ -23,7 +23,7 @@
                 w += g.width(dpi);
                 if (w > 800) {
                     w = 10;
-                    h += 100;
+                    h += 50;
                 }
             }
             console.debug(f);
