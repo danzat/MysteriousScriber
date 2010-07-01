@@ -222,7 +222,11 @@ md.HList = Class.define({
             var total_shrink = [0, 0, 0, 0];
             for (i = 0; i < this.children.length; i++) {
                 p = this.children[i];
-                if (p instanceof md.Box || p instanceof md.List) {
+                if (p instanceof md.Char) {
+                    x += p.width;
+                    h = Math.max(h, p.height);
+                    d = Math.max(d, p.depth);
+                } else if (p instanceof md.Box || p instanceof md.List) {
                     x += p.width;
                     h = Math.max(h, p.height);
                     d = Math.max(d, p.depth);
@@ -345,7 +349,10 @@ md.Rasterizer = Class.define({
             var p;
             for (var i = 0; i < box.children.length; i++) {
                 p = box.children[i];
-                if (p instanceof md.List) {
+                if (p instanceof md.Char) {
+                    p.render(this.ctx, this.x, this.y);
+                    this.x += p.width;
+                } else if (p instanceof md.List) {
                     var edge = this.x;
                     this.y = baseline + p.shift_amount;
                     if (p instanceof md.HList) {
@@ -427,6 +434,31 @@ md.Rasterizer = Class.define({
                     this.y += rule_height;
                 }
             }
+        }
+    }
+});
+
+md.Char = Class.define({
+    type: "Char",
+    superclass: md.Node,
+    members: {
+        // I still don't have the char-codes of glyphs (did not parse the 'cmap' table yet), so I'll use glyph indices for the time being
+        init: function (index, font, dpi) {
+            this._super();
+            this.c = index;
+            this.dpi = dpi;
+            this.glyph = font['glyf'].glyphs[this.c];
+            this.width = this.glyph.width(dpi);
+            this.height = this.glyph.height(dpi);
+            this.depth = this.glyph.depth(dpi);
+        },
+
+        render: function (ctx, x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(1, -1); // the fonts are vertically flipped
+            this.glyph.render(ctx, this.dpi);
+            ctx.restore();
         }
     }
 });
