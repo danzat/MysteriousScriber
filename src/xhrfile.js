@@ -71,7 +71,7 @@ md.Stream = Class.define({
 
         UBInt32: function (offset) {
             var d = this.read(4, offset);
-            return d[0] * (1<<24)  + d[1] * (1<<16) + d[2] *(1<<8) + d[3];
+            return d[0] * (1<<24) + d[1] * (1<<16) + d[2] * (1<<8) + d[3];
         },
         
         SBInt16: function (offset) {
@@ -84,7 +84,7 @@ md.Stream = Class.define({
         },
 
         SBInt32: function (offset) {
-            var d = this.UBInt16(offset);
+            var d = this.UBInt32(offset);
             if ((d & 0x80000000) == 0x80000000) {
                 return d | 0xffffffff00000000;
             } else {
