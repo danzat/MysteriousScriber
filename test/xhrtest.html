@@ -13,7 +13,7 @@
             var w = 10, h = 50;
             var g;
             var dpi = 96 * 3;
-            for (var i = 0; i < 256; i++) {
+            for (var i in f['glyf'].glyphs) {
                 g = f['glyf'].glyphs[i];
                 ctx.save();
                 ctx.translate(w, h);

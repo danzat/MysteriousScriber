@@ -22,6 +22,7 @@ md.TTF = Class.define({
             this['maxp'] = new md.tbl_maxp(this, f.copy(this.headers['maxp'].offset, this.headers['maxp'].length));
             this['loca'] = new md.tbl_loca(this, f.copy(this.headers['loca'].offset, this.headers['loca'].length));
             this['cmap'] = new md.tbl_cmap(this, f.copy(this.headers['cmap'].offset, this.headers['cmap'].length));
+            this['post'] = new md.tbl_post(this, f.copy(this.headers['post'].offset, this.headers['post'].length));
             this['glyf'] = new md.tbl_glyf(this, f.copy(this.headers['glyf'].offset, this.headers['glyf'].length));
         }
     }
@@ -129,7 +130,6 @@ md.tbl_cmap = Class.define({
             var f = this.file;
             var tableVersion = f.UBInt16();
             var numSubTables = f.UBInt16();
-            console.debug('numSubTables', numSubTables);
             for (var i = 0; i < numSubTables; i++) {
                 var platformID = f.UBInt16();
                 var platEncID = f.UBInt16();
@@ -165,6 +165,55 @@ md.tbl_cmap = Class.define({
     }
 });
 
+md.tbl_post = Class.define({
+    members: {
+        init: function (font, stream) {
+            this.font = font;
+            this.file = stream;
+            this.maps = [];
+            this.load();
+        },
+
+        load: function () {
+            var f = this.file;
+            this.format = f.Fixed32();
+            this.italicRange = f.Fixed32();
+            this.underlinePosition = f.SBInt16();
+            this.underlineThikness = f.SBInt16();
+            this.isFixedPitch = f.UBInt32();
+            this.minMemType42 = f.UBInt32();
+            this.maxMemType42 = f.UBInt32();
+            this.minMemType1 = f.UBInt32();
+            this.maxMemType1 = f.UBInt32();
+            if (this.format == 2) {
+                this.numberOfGlyphs = f.UBInt16();
+                if (this.numberOfGlyphs != this.font['maxp'].numGlyphs) {
+                    throw "Error: numberOfGlyphs do not match between 'maxp' (" + this.font['maxp'].numGlyphs + ") and 'post' (" + this.numberOfGlyphs + ")";
+                }
+                this.glyphNameIndex = [];
+                for (var i = 0; i < this.numberOfGlyphs; i++) {
+                    this.glyphNameIndex.push(f.UBInt16());
+                }
+                this.glyphNames = [];
+                while (!f.eof()) {
+                    var len = f.Byte();
+                    var name = f.String(len);
+                    this.glyphNames.push(name);
+                }
+                this.map = {};
+                var c;
+                for (var i = 0; i < this.numberOfGlyphs; i++) {
+                    c = this.glyphNameIndex[i];
+                    if (c >= 258) c -= 258;
+                    this.map[this.glyphNames[c]] = i;
+                }
+            } else {
+                console.debug("Warning: 'post' format not supported: ", this.format);
+            }
+        }
+    }
+});
+
 md.tbl_glyf = Class.define({
     members: {
         init: function (font, stream) {
@@ -175,7 +224,7 @@ md.tbl_glyf = Class.define({
 
         load: function () {
             var loca = this.font['loca'].locations;
-            var map = this.font['cmap'].maps[0].map;
+            var map = this.font['post'].map;
             var glyphs = [];
             this.glyphs = {};
             for (var i = 0; i < loca.length - 1; i++) {
