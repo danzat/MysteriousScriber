@@ -53,6 +53,10 @@ md.Stream = Class.define({
             }
         },
 
+        eof: function () {
+            return this.cursor == this.length();
+        },
+
         String: function (n, offset) {
             var data = this.read(n, offset);
             var s = "";
