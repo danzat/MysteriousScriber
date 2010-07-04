@@ -160,7 +160,12 @@ md.tbl_cmap = Class.define({
         },
 
         processFormat4: function (f) {
-            console.debug(f.data);
+        },
+
+        getGlyphIndex: function (c) {
+            // this sould go over the tables and retrieve the most suitable index
+            // I only use format0
+            return this.maps[0].map[c.charCodeAt(0)];
         }
     }
 });
@@ -224,14 +229,9 @@ md.tbl_glyf = Class.define({
 
         load: function () {
             var loca = this.font['loca'].locations;
-            var map = this.font['post'].map;
-            var glyphs = [];
             this.glyphs = {};
             for (var i = 0; i < loca.length - 1; i++) {
-                glyphs[i] = new md.Glyph(this.file.copy(loca[i], loca[i+1] - loca[i]), this.font['head'].unitsPerEm);
-            }
-            for (charCode in map) {
-                this.glyphs[charCode] = glyphs[map[charCode]];
+                this.glyphs[i] = new md.Glyph(this.file.copy(loca[i], loca[i+1] - loca[i]), this.font['head'].unitsPerEm);
             }
         }
     }
@@ -400,15 +400,6 @@ md.Glyph = Class.define({
                 }
             }
             ctx.fill();
-            // draw a bounding box
-            //ctx.strokeStyle = "blue";
-            //ctx.strokeRect(this.xMin * px2pt, this.yMin * px2pt, this.xMax * px2pt - this.xMin * px2pt, this.yMax * px2pt - this.yMin * px2pt);
-            // draw the baseline
-            //ctx.strokeStyle = "red";
-            //ctx.beginPath();
-            //ctx.moveTo(this.xMin * px2pt, 0);
-            //ctx.lineTo(this.xMax * px2pt, 0);
-            //ctx.stroke();
             ctx.restore();
         },
 
