@@ -229,7 +229,7 @@ md.tbl_glyf = Class.define({
 
         load: function () {
             var loca = this.font['loca'].locations;
-            this.glyphs = {};
+            this.glyphs = [];
             for (var i = 0; i < loca.length - 1; i++) {
                 this.glyphs[i] = new md.Glyph(this.file.copy(loca[i], loca[i+1] - loca[i]), this.font['head'].unitsPerEm);
             }

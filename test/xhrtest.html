@@ -13,12 +13,14 @@
             var w = 10, h = 50;
             var g;
             var dpi = 96 * 3;
-            for (var i in f['glyf'].glyphs) {
-                g = f['glyf'].glyphs[i];
+            var i = 0;
+            for (var j = 0; j < f['glyf'].glyphs.length; j++) {
+                g = f['glyf'].glyphs[j];
+                console.debug(g);
                 ctx.save();
                 ctx.translate(w, h);
                 ctx.scale(1, -1);
-                f['glyf'].glyphs[i].render(ctx, dpi);
+                g.render(ctx, dpi);
                 ctx.restore();
                 w += g.width(dpi);
                 if (w > 800) {
@@ -26,7 +28,6 @@
                     h += 50;
                 }
             }
-            console.debug(f);
         }
     </script>
 </head>
