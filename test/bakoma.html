@@ -1,0 +1,43 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <title>TeX box-model test page</title>
+    <script type="text/javascript" src="../lib/jstraits.js"></script>
+    <script type="text/javascript" src="../src/xhrfile.js"></script>
+    <script type="text/javascript" src="../src/truetype.js"></script>
+    <script type="text/javascript" src="../src/bakoma.js"></script>
+    <script type="text/javascript">
+        function init() {
+            var ctx = document.getElementById('canvas').getContext('2d');
+            var f = new md.BaKoMa();
+            ctx.save();
+            ctx.translate(170, 60);
+            ctx.scale(1, -1);
+            f.getGlyph('ex', '\\oint').render(ctx, 300);
+            ctx.restore();
+
+            ctx.save();
+            ctx.translate(200, 100);
+            ctx.scale(1, -1);
+            f.getGlyph('it', 'x').render(ctx, 300);
+            ctx.restore();
+            
+            ctx.save();
+            ctx.translate(240, 100);
+            ctx.scale(1, -1);
+            f.getGlyph('it', 'd').render(ctx, 300);
+            ctx.restore();
+
+            ctx.save();
+            ctx.translate(260, 100);
+            ctx.scale(1, -1);
+            f.getGlyph('it', 'x').render(ctx, 300);
+            ctx.restore();
+        }
+    </script>
+</head>
+<body onload='init()'>
+    <canvas id='canvas' width='1000' height='1000'></canvas>
+</body>
+</html>
