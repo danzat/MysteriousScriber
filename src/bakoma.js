@@ -30,7 +30,6 @@ md.BaKoMa = Class.define({
         getGlyph: function (font, symbol) {
             var entry = md.tex_to_bakoma[symbol];
             if (typeof entry == "undefined") {
-                console.debug(this.fontmap[font]);
                 var glyphIndex = this.fontmap[font]['cmap'].getGlyphIndex(symbol);
                 if (typeof glyphIndex == "undefined") {
                     console.debug("Error: symbol '" + symbol + "' not fount in font '" + font + "'");
