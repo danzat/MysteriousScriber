@@ -8,24 +8,26 @@
     <script type="text/javascript" src="../src/truetype.js"></script>
     <script type="text/javascript">
         function main() {
-            var ctx = document.getElementById('canvas').getContext('2d');
-            var f = new md.TTF("http://localhost:8000/res/cmmi10.ttf");
-            var w = 10, h = 50;
+            ctx = document.getElementById('canvas').getContext('2d');
+            f = new md.TTF("http://localhost:8000/res/cmex10.ttf");
+            var w = 10, h = 60;
             var g;
-            var dpi = 96 * 3;
+            var dpi = 96;
             var i = 0;
             for (var j = 0; j < f['glyf'].glyphs.length; j++) {
                 g = f['glyf'].glyphs[j];
-                console.debug(g);
                 ctx.save();
                 ctx.translate(w, h);
+                ctx.fillText(String(j), 0, -50);
+                ctx.fillText(String(Math.round(100* (g.height(dpi))))/100, 0, -40);
+                ctx.fillText(String(Math.round(100* (g.depth(dpi))))/100, 0, -30);
                 ctx.scale(1, -1);
-                g.render(ctx, dpi);
+                g.render(ctx, 24, dpi);
                 ctx.restore();
-                w += g.width(dpi);
+                w += Math.max(g.width(dpi, 24), 40);
                 if (w > 800) {
                     w = 10;
-                    h += 50;
+                    h += 150;
                 }
             }
         }
