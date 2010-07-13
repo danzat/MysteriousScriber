@@ -377,11 +377,16 @@ md.Glyph = Class.define({
             this.contours = contours;
         },
 
-        render: function (ctx, dpi) {
+        render: function (ctx, height, dpi) {
+            if (this.height(dpi) != 0 || this.depth(dpi) != 0) {
+                var scale = height / (this.height(dpi) + this.depth(dpi));
+            } else {
+                return;
+            }
             // there are always 72 points in 1 inch
             // so if I have <dpi> pixels in 1 inch
             // 72pt = <dpi>px --> 1pt = <dpi>/72 px
-            var px2pt = dpi / 72;
+            var px2pt = scale * dpi / 72;
             if (this.file.length() == 0) return;
             ctx.save();
             ctx.beginPath();
@@ -403,19 +408,31 @@ md.Glyph = Class.define({
             ctx.restore();
         },
 
-        width: function (dpi) {
+        width: function (dpi, height) {
+            var scale = 1;
+            if (typeof height != "undefined") {
+                var scale = height / (this.height(dpi) + this.depth(dpi));
+            }
             if (this.file.length() == 0) return 0;
-            return this.xMax * dpi / 72;
+            return scale * this.xMax * dpi / 72;
         },
 
-        height: function (dpi) {
+        height: function (dpi, height) {
+            var scale = 1;
+            if (typeof height != "undefined") {
+                var scale = height / (this.height(dpi) + this.depth(dpi));
+            }
             if (this.file.length() == 0) return 0;
-            return this.yMax * dpi / 72;
+            return scale * this.yMax * dpi / 72;
         },
 
-        depth: function (dpi) {
+        depth: function (dpi, height) {
+            var scale = 1;
+            if (typeof height != "undefined") {
+                var scale = height / (this.height(dpi) + this.depth(dpi));
+            }
             if (this.file.length() == 0) return 0;
-            if (this.yMin < 0) return -this.yMin * dpi / 72;
+            if (this.yMin < 0) return -scale * this.yMin * dpi / 72;
             return 0;
         }
     }
