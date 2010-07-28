@@ -377,12 +377,7 @@ md.Glyph = Class.define({
             this.contours = contours;
         },
 
-        render: function (ctx, height, dpi) {
-            if (this.height(dpi) != 0 || this.depth(dpi) != 0) {
-                var scale = height / (this.height(dpi) + this.depth(dpi));
-            } else {
-                return;
-            }
+        render: function (ctx, scale, dpi) {
             // there are always 72 points in 1 inch
             // so if I have <dpi> pixels in 1 inch
             // 72pt = <dpi>px --> 1pt = <dpi>/72 px
@@ -408,29 +403,17 @@ md.Glyph = Class.define({
             ctx.restore();
         },
 
-        width: function (dpi, height) {
-            var scale = 1;
-            if (typeof height != "undefined") {
-                var scale = height / (this.height(dpi) + this.depth(dpi));
-            }
+        width: function (dpi, scale) {
             if (this.file.length() == 0) return 0;
             return scale * this.xMax * dpi / 72;
         },
 
-        height: function (dpi, height) {
-            var scale = 1;
-            if (typeof height != "undefined") {
-                var scale = height / (this.height(dpi) + this.depth(dpi));
-            }
+        height: function (dpi, scale) {
             if (this.file.length() == 0) return 0;
             return scale * this.yMax * dpi / 72;
         },
 
-        depth: function (dpi, height) {
-            var scale = 1;
-            if (typeof height != "undefined") {
-                var scale = height / (this.height(dpi) + this.depth(dpi));
-            }
+        depth: function (dpi, scale) {
             if (this.file.length() == 0) return 0;
             if (this.yMin < 0) return -scale * this.yMin * dpi / 72;
             return 0;
