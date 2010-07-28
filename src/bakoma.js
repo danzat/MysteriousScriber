@@ -39,7 +39,6 @@ md.BaKoMa = Class.define({
             }
             var _font = entry[0];
             var glyphIndex = entry[1];
-            glyphIndex -= 2; // XXX: apparently the indiced from the table I "stole" from matplotlib are off by 2...
             return this.fontmap[this._inversemap[_font]]['glyf'].glyphs[glyphIndex];
         }
     }
