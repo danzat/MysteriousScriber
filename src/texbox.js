@@ -10,7 +10,7 @@ md.clone = function (o) {
     if (o instanceof Object) {
         oo = {};
         for (var key in o) {
-            c = this.clone(o[key]);
+            c = md.clone(o[key]);
             if (c !== undefined) oo[key] = c;
         }
         return oo;
@@ -18,7 +18,7 @@ md.clone = function (o) {
     if (o instanceof Array) {
         oo = [];
         for (var i; i < o.length; i) {
-            c = this.clone(o[i]);
+            c = md.clone(o[i]);
             if (c !== undefined) oo[i] = c;
         }
         return oo;
@@ -344,7 +344,7 @@ md.Rasterizer = Class.define({
             var glue_sign = box.glue_sign;
             var baseline = this.y;
             var left_edge = this.x;
-            box.render(this.ctx, this.x, this.y);
+            //box.render(this.ctx, this.x, this.y);
 
             var p;
             for (var i = 0; i < box.children.length; i++) {
@@ -443,21 +443,21 @@ md.Char = Class.define({
     superclass: md.Node,
     members: {
         // I still don't have the char-codes of glyphs (did not parse the 'cmap' table yet), so I'll use glyph indices for the time being
-        init: function (c, font, dpi) {
+        init: function (c, state) {
             this._super();
             this.c = c;
-            this.dpi = dpi;
-            this.glyph = font['glyf'].glyphs[c];
-            this.width = this.glyph.width(dpi);
-            this.height = this.glyph.height(dpi);
-            this.depth = this.glyph.depth(dpi);
+            this.state = state;
+            this.glyph = state.font_output.getGlyph(state.variant, c);
+            this.height = state.height;
+            this.width = this.glyph.width(state.dpi, this.height);
+            this.depth = this.glyph.depth(state.dpi, this.height);
         },
 
         render: function (ctx, x, y) {
             ctx.save();
             ctx.translate(x, y);
             ctx.scale(1, -1); // the fonts are vertically flipped
-            this.glyph.render(ctx, this.dpi);
+            this.glyph.render(ctx, this.height, this.state.dpi);
             ctx.restore();
         }
     }
