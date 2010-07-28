@@ -6,37 +6,26 @@
     <script type="text/javascript" src="../lib/jstraits.js"></script>
     <script type="text/javascript" src="../src/xhrfile.js"></script>
     <script type="text/javascript" src="../src/truetype.js"></script>
+    <script type="text/javascript" src="../src/bakoma.js"></script>
     <script type="text/javascript" src="../src/texbox.js"></script>
+    <script type="text/javascript" src="../src/compiler.js"></script>
     <script type="text/javascript">
         function init() {
-            var f = new md.TTF("http://localhost:8000/res/cmmi10.ttf");
             var ctx = document.getElementById('canvas').getContext('2d');
-            var fill = new md.Fill();
-            var hlist1 = new md.HList([
-                fill,
-                new md.Char('gamma', f, 200),
-                new md.Char('epsilon1', f, 200),
-                new md.Char('iota', f, 200),
-                new md.Char('alpha', f, 200),
-                fill
-            ]);
-            var hlist2 = new md.HList([
-                fill,
-                new md.Char('W', f, 200),
-                new md.Char('o', f, 200),
-                new md.Char('r', f, 200),
-                new md.Char('l', f, 200),
-                new md.Char('d', f, 200),
-                fill
-            ]);
-            var width = Math.max(hlist1.width, hlist2.width);
-            hlist1.hpack(width, md.EXACT);
-            hlist2.hpack(width, md.EXACT);
-            var vlist1 = new md.VList([hlist1, fill, hlist2]);
             var rast = new md.Rasterizer(ctx);
-
-            var out = new md.HList([vlist1]);
-            rast.render(100, 200, out);
+            var comp = new md.Compiler();
+            console.debug(comp.states);
+            comp.save();
+            console.debug(comp.states);
+            comp.setHeight(2);
+            console.debug(comp.states);
+            comp.setVariant("bf");
+            rast.render(100, 30, comp.string("hello"));
+            comp.restore();
+            console.debug(comp.states);
+            rast.render(100, 60, comp.string("hello"));
+            comp.setHeight(3);
+            rast.render(100, 120, comp.string("hello"));
         }
     </script>
 </head>

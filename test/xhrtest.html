@@ -19,12 +19,12 @@
                 ctx.save();
                 ctx.translate(w, h);
                 ctx.fillText(String(j), 0, -50);
-                ctx.fillText(String(Math.round(100* (g.height(dpi))))/100, 0, -40);
-                ctx.fillText(String(Math.round(100* (g.depth(dpi))))/100, 0, -30);
+                ctx.fillText(String(Math.round(100* (g.height(dpi, 1))))/100, 0, -40);
+                ctx.fillText(String(Math.round(100* (g.depth(dpi, 1))))/100, 0, -30);
                 ctx.scale(1, -1);
-                g.render(ctx, 24, dpi);
+                g.render(ctx, 1, dpi);
                 ctx.restore();
-                w += Math.max(g.width(dpi, 24), 40);
+                w += Math.max(g.width(dpi, 1), 40);
                 if (w > 800) {
                     w = 10;
                     h += 150;
