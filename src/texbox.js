@@ -446,18 +446,18 @@ md.Char = Class.define({
         init: function (c, state) {
             this._super();
             this.c = c;
-            this.state = state;
+            this.state = state.clone();
             this.glyph = state.font_output.getGlyph(state.variant, c);
-            this.height = state.height;
-            this.width = this.glyph.width(state.dpi, this.height);
-            this.depth = this.glyph.depth(state.dpi, this.height);
+            this.height = this.glyph.height(state.dpi, state.height);
+            this.width = this.glyph.width(state.dpi, state.height);
+            this.depth = this.glyph.depth(state.dpi, state.height);
         },
 
         render: function (ctx, x, y) {
             ctx.save();
             ctx.translate(x, y);
             ctx.scale(1, -1); // the fonts are vertically flipped
-            this.glyph.render(ctx, this.height, this.state.dpi);
+            this.glyph.render(ctx, this.state.height, this.state.dpi);
             ctx.restore();
         }
     }

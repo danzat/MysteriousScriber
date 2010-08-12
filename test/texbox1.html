@@ -16,16 +16,15 @@
             var comp = new md.Compiler();
             console.debug(comp.states);
             comp.save();
-            console.debug(comp.states);
             comp.setHeight(2);
-            console.debug(comp.states);
             comp.setVariant("bf");
-            rast.render(100, 30, comp.string("hello"));
+            var hello_bf_2 = comp.string("hello");
             comp.restore();
-            console.debug(comp.states);
-            rast.render(100, 60, comp.string("hello"));
+            var hello_it_1 = comp.string("hello");
             comp.setHeight(3);
-            rast.render(100, 120, comp.string("hello"));
+            var hello_it_3 = comp.string("hello");
+            var vlist = new md.VList([hello_bf_2, hello_it_1, hello_it_3]);
+            rast.render(100, 100, new md.HList([vlist]));
         }
     </script>
 </head>
